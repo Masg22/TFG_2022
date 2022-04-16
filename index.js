@@ -7,11 +7,9 @@ const { Pool, pool } = require('./config')
 const { request } = require('express')
 const { response } = require('express')
 
-const app = express()
+const port = process.env.PORT || 5000
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(cors())
+const app = express()
 
 const getPeople = (request, response) => {
 	pool.query('SELECT * FROM People', (error, results) => {
@@ -42,6 +40,10 @@ app
 		res.send('hello world')
 	})
 
+app.listen(port, () => {
+	console.log(`Running on port ${port}`)
+})
+
 	/*
 app.route('/people')
 	.get(getPeople)
@@ -61,7 +63,4 @@ app.route('/people')
 	}
 )
 */
-const port = process.env.port || 3000
-app.listen(port, () => {
-	console.log(`Running on port 3000`)
-})
+
