@@ -32,7 +32,7 @@ app
 				'SELECT * FROM tags'
 			);
 			const results = {'results': (result) ? result.rows : null};
-			res.render('tags/db', results);
+			res.render('pages/db', results);
 			client.release();
 		}
 		catch (err){
