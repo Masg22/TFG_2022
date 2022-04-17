@@ -1,5 +1,5 @@
-CREATE TABLE People (
-    PersonID int PRIMARY KEY auto_increment NOT NULL,
+CREATE TABLE people (
+    PersonID serial PRIMARY KEY NOT NULL,
     FirstName varchar(255) NOT NULL,
     LastName varchar(255),
     Age int,
@@ -9,54 +9,63 @@ CREATE TABLE People (
     PhoneNumber varchar(255)
 );
 
-CREATE TABLE Activities (
-  ActivityID int PRIMARY KEY auto_increment NOT NULL,
+CREATE TABLE activities (
+  ActivityID serial PRIMARY KEY NOT NULL,
   ActivityName varchar(255) NOT NULL,
+  ActivityDescription text,
   ScheduleDay varchar(255),
   StartTime time,
   EndTime time
 );
 
-CREATE TABLE Tags (
-    TagName varchar(255) PRIMARY KEY NOT NULL,
-);
-
-CREATE TABLE Attendances(
-    PersonID int,
-    ActivityID int,
+CREATE TABLE attendances(
+    PersonID serial,
+    ActivityID serial,
     DayOfAttendance date,
     Atendance boolean,
     EnterTime time,
     PRIMARY KEY (PersonID, ActivityID, DayOfAttendance),
-    FOREIGN KEY (PersonID) REFERENCES Persons(PersonID),
-    FOREIGN KEY (ActivityID) REFERENCES Activities(ActivityID)
+    FOREIGN KEY (PersonID) REFERENCES people(PersonID),
+    FOREIGN KEY (ActivityID) REFERENCES activities(ActivityID)
 );
 
-CREATE TABLE Groups(
+CREATE TABLE groups(
     GroupName varchar(255),
-    PersonID int,
+    PersonID serial,
     PRIMARY KEY (GroupName, PersonID),
-    FOREIGN KEY (PersonID) REFERENCES Persons(PersonID),
+    FOREIGN KEY (PersonID) REFERENCES people(PersonID)
 );
 
-CREATE TABLE Course(
+CREATE TABLE course(
     CouseName varchar(255),
-    ActivityID int,
-    PRIMARY KEY (PersonID, ActivityID),
-    FOREIGN KEY (ActivityID) REFERENCES Activities(ActivityID)
+    ActivityID serial,
+    PRIMARY KEY (CouseName, ActivityID),
+    FOREIGN KEY (ActivityID) REFERENCES activities(ActivityID)
 );
 
-CREATE TABLE Stadistics(
+CREATE TABLE stadistics(
     StadisticName varchar(255),
     Stats text,
     PRIMARY KEY (StadisticName)
 );
 
-CREATE TABLE Responsable(
+CREATE TABLE responsable(
     PersonID int,
     ActivityID int,
     PRIMARY KEY (PersonID, ActivityID),
-    FOREIGN KEY (PersonID) REFERENCES Persons(PersonID),
-    FOREIGN KEY (ActivityID) REFERENCES Activities(ActivityID)
+    FOREIGN KEY (PersonID) REFERENCES people(PersonID),
+    FOREIGN KEY (ActivityID) REFERENCES activities(ActivityID)
+);
+
+CREATE TABLE tags(
+	TagName varchar(255) PRIMARY KEY NOT NULL
+);
+
+CREATE TABLE activityTags(
+	ActivityID serial,
+	TagName varchar(255),
+	PRIMARY KEY (ActivityID, TagName),
+    FOREIGN KEY (ActivityID) REFERENCES activities(ActivityID),
+	FOREIGN KEY (TagName) REFERENCES tags(TagName)
 );
 

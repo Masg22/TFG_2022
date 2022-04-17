@@ -10,57 +10,31 @@ const { response } = require('express')
 const port = process.env.PORT || 5000
 
 const app = express()
-
-const getPeople = (request, response) => {
-	pool.query('SELECT * FROM People', (error, results) => {
-		if (error) {
-			throw error
-		}
-		response.status(200).json(results.rows)
-	})
-}
-
-const addPerson = (request, response) => {
-	const { personID, firstName, lastName, age, gender, isUser, emailAddress, phoneNumber } = request.body
-	pool.query(
-		'INSERT INTO People (PersonID, FirstName, LastName, Age, Gender, IsUser, EmailAddress, PhoneNumber) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-		[personID, firstName, lastName, age, gender, isUser, emailAddress, phoneNumber],
-		(error) => {
-			if (error) {
-				throw error
-			}
-			response.status(201).json({ status: 'success', message: 'PersonAdded.' })
-		}
-	)
-}
-
 app
 	.route('/')
 	.get((req, res) => {
 		res.send('hello world')
 	})
 
+app
+	.route('/db')
+	.get(async(req,res) => {
+		try{
+			const client = await pool.connect();
+			const result = await client.query(
+				'SELECT * FROM tags'
+			);
+			const results = {'results': (result) ? result.rows : null};
+			res.render('tags/db', results);
+			client.release();
+		}
+		catch (err){
+			console.error(err);
+			res.send("ERRROR: " + err);
+		}
+	})
+
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
 })
-
-	/*
-app.route('/people')
-	.get(getPeople)
-	.post(
-	(request, response) => {
-		const { personID, firstName, lastName, age, gender, isUser, emailAddress, phoneNumber } = request.body
-		pool.query(
-			'INSERT INTO People (PersonID, FirstName, LastName, Age, Gender, IsUser, EmailAddress, PhoneNumber) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-			[personID, firstName, lastName, age, gender, isUser, emailAddress, phoneNumber],
-			(error) => {
-				if (error) {
-					throw error
-				}
-				response.status(201).json({ status: 'success', message: 'PersonAdded.' })
-			}
-		)
-	}
-)
-*/
 
