@@ -5,10 +5,10 @@ const cors = require('cors')
 const { Pool } = require('pg');
 
 const pool = new Pool({
-    connectionString : process.env.DATABASE_URL,
-    ssl : {
-        rejectUnauthorized: false
-    }
+	connectionString: process.env.DATABASE_URL,
+	ssl: {
+		rejectUnauthorized: false
+	}
 });
 
 const { request } = require('express')
@@ -25,17 +25,31 @@ app
 
 app
 	.route('/db')
-	.get(async(req,res) => {
-		try{
+	.get(async (req, res) => {
+		try {
 			const client = await pool.connect();
 			const result = await client.query(
 				'SELECT * FROM tags'
 			);
-			const results = {'results': (result) ? result.rows : null};
-			res.render('pages/db', results);
+			const results = { 'results': (result) ? result.rows : null };
+			res.send(result.rows);
 			client.release();
 		}
-		catch (err){
+		catch (err) {
+			console.error(err);
+			res.send("ERRROR: " + err);
+		}
+	})
+	.post(async (req, res) => {
+		try {
+			const { tagName } = req.body;
+			const client = await pool.connect();
+			const result = await client.query(
+				'INSERT INTO tags(tagName) VALUES($1)',
+				[tagName],
+				res.status(201).json({ status: 'success', message: 'Tag added.' })
+			);
+		} catch (err) {
 			console.error(err);
 			res.send("ERRROR: " + err);
 		}
