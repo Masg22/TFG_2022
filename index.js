@@ -2,7 +2,14 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 
-const { Pool, pool } = require('./config')
+const { Pool } = require('pg');
+
+const pool = new Pool({
+    connectionString : process.env.DATABASE_URL,
+    ssl : {
+        rejectUnauthorized: false
+    }
+});
 
 const { request } = require('express')
 const { response } = require('express')
