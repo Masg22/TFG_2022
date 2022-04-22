@@ -47,7 +47,7 @@ app
 		
 		const client = await pool.connect();
 		
-		const { tagname } = req.body.json();
+		const { tagname } = req.body;
 		console.log("json: %j", req.body);
 		console.log("tagname: ", [tagname]);
 
