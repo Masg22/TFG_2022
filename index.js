@@ -1,6 +1,6 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const cors = require('cors')
+const express = require('express');
+//const bodyParser = require('body-parser');
+const port = process.env.PORT || 5000;
 
 const { Pool } = require('pg');
 
@@ -11,20 +11,23 @@ const pool = new Pool({
 	}
 });
 
-const { request } = require('express')
-const { response } = require('express')
+const app = express();
 
-const port = process.env.PORT || 5000
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
-const app = express()
 app
 	.route('/')
 	.get((req, res) => {
 		res.send('hello world')
-	})
+	});
 
 app
-	.route('/db')
+	.route('/tags')
 	.get(async (req, res) => {
 		try {
 			const client = await pool.connect();
@@ -41,19 +44,23 @@ app
 		}
 	})
 	.post(async (req, res) => {
-		try {
-			const { tagName } = req.body;
-			const client = await pool.connect();
-			const result = await client.query(
-				'INSERT INTO tags(tagName) VALUES($1)',
-				[tagName],
-				res.status(201).json({ status: 'success', message: 'Tag added.' })
-			);
-		} catch (err) {
-			console.error(err);
-			res.send("ERRROR: " + err);
-		}
-	})
+		
+		const client = await pool.connect();
+		
+		const { tagname } = req.body.json();
+		console.log("json: %j", req.body);
+		console.log("tagname: ", [tagname]);
+
+		client.query(
+			`INSERT INTO tags (tagName) VALUES ($1)`,
+			[tagname],
+			(error, result) => {
+				if (error) {
+					throw error;
+				}
+				res.status(201).send(`User added with name: ${result.nametag}`);
+			})
+	});
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
