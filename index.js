@@ -1,66 +1,73 @@
-const express = require('express');
-//const bodyParser = require('body-parser');
-const port = process.env.PORT || 5000;
+const express = require('express')
+const bodyParser = require('body-parser')
+const port = process.env.PORT || 5000
+const db = require('./queries')
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL,
-	ssl: {
-		rejectUnauthorized: false
-	}
-});
-
-const app = express();
-
-app.use(express.json());
+const app = express()
+app.use(bodyParser.json());
 app.use(
-  express.urlencoded({
+  bodyParser.urlencoded({
     extended: true,
   })
-);
+)
 
-app
-	.route('/')
-	.get((req, res) => {
-		res.send('hello world')
-	});
+app.get('/', (request, response) => {
+	response.json({ info: 'Node.js, Express, and Postgres API - MIGUEL TFG 2022' })
+  }
+)
 
-app
-	.route('/tags')
-	.get(async (req, res) => {
-		try {
-			const client = await pool.connect();
-			const result = await client.query(
-				'SELECT * FROM tags'
-			);
-			const results = { 'results': (result) ? result.rows : null };
-			res.send(result.rows);
-			client.release();
-		}
-		catch (err) {
-			console.error(err);
-			res.send("ERRROR: " + err);
-		}
-	})
-	.post(async (req, res) => {
-		
-		const client = await pool.connect();
-		
-		const { tagname } = req.body;
-		console.log("json: %j", req.body);
-		console.log("tagname: ", [tagname]);
+app.get('/people', db.getAllPeople)
+app.post('/people', db.createPerson)
 
-		client.query(
-			`INSERT INTO tags (tagName) VALUES ($1)`,
-			[tagname],
-			(error, result) => {
-				if (error) {
-					throw error;
-				}
-				res.status(201).send(`User added with name: ${result.nametag}`);
-			})
-	});
+app.route('/people/:peopleID')
+   .get(db.getPersonByID)
+   .put(db.updatePersonalData)
+   .put(db.unsubscribe)
+
+app.route('/people/responsibles')
+   .get(db.getAllResponsibles)
+
+app.route('/people/responsibles/:personID')
+   .get(db.getPersonByID)
+
+app.route('/people/responsibles/:personID/courses')
+   .get(db.getResonsiblesCourses)
+
+
+app.route('/activities')
+   .get(db.getAllActivities)
+   .post(db.createActivity)
+
+app.route('/activities/:activityID')
+   .get(db.getActivityByID)
+   .put(db.updateActivity)
+   .delete(db.deleteActivity)
+
+app.route('/courses').get(db.getAllCourses)
+
+app.route('/activities/:activityID/courses')
+   .get(db.getActivityCourses)
+   .post(db.createActivityCourse)
+
+app.route('/activities/:ActivityID/courses/:courseID')
+	.get(db.getCourseByID)
+	.put(db.updateCourse)
+	.delete(db.deleteCourse)
+
+app.route('/activities/:ActivityID/courses/:courseID/today')
+   .get(db.getTodayActivities)
+
+app.route('/activities/:ActivityID/courses/:courseID/activitydays')
+   .get(db.getAllActivityDaysOfTheCourse)
+
+app.route('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini')
+   .get(db.getActivityDay)
+   .put(db.open_closeActivityDay)
+   .delete(db.anulateActivityday)
+
+app.route('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini/attendees')
+   .get(db.getActivityDayAttendees)
+   .put(db.updateAttendees)
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
