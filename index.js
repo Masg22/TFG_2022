@@ -19,55 +19,40 @@ app.get('/', (request, response) => {
 app.get('/people', db.getAllPeople)
 app.post('/people', db.createPerson)
 
-app.route('/people/:peopleID')
-   .get(db.getPersonByID)
-   .put(db.updatePersonalData)
-   .put(db.unsubscribe)
+app.get('/people/:peopleID', db.getPersonByID)
+app.put('/people/:peopleID', db.updatePersonalData)
+app.put('/people/:peopleID', db.unsubscribe)
 
-app.route('/people/responsibles')
-   .get(db.getAllResponsibles)
+app.get('/people/responsibles', db.getAllResponsibles)
 
-app.route('/people/responsibles/:personID')
-   .get(db.getPersonByID)
+app.get('/people/responsibles/:personID', db.getPersonByID)
 
-app.route('/people/responsibles/:personID/courses')
-   .get(db.getResonsiblesCourses)
+app.get('/people/responsibles/:personID/courses', db.getResonsiblesCourses)
 
+app.get('/activities', db.getAllActivities)
+app.post('/activities', db.createActivity)
+app.delete('/activities/:activityID', db.deleteActivity)
 
-app.route('/activities')
-   .get(db.getAllActivities)
-   .post(db.createActivity)
+app.get('/courses', db.getAllCourses)
 
-app.route('/activities/:activityID')
-   .get(db.getActivityByID)
-   .put(db.updateActivity)
-   .delete(db.deleteActivity)
+app.get('/activities/:activityID/courses', db.getActivityCourses)
+app.post('/activities/:activityID/courses', db.createActivityCourse)
 
-app.route('/courses').get(db.getAllCourses)
+app.get('/activities/:ActivityID/courses/:courseID', db.getCourseByID)
+app.put('/activities/:ActivityID/courses/:courseID', db.updateCourse)
+app.delete('/activities/:ActivityID/courses/:courseID', db.deleteCourse)
 
-app.route('/activities/:activityID/courses')
-   .get(db.getActivityCourses)
-   .post(db.createActivityCourse)
+app.get('/activities/:ActivityID/courses/:courseID/today', db.getTodayActivities)
 
-app.route('/activities/:ActivityID/courses/:courseID')
-	.get(db.getCourseByID)
-	.put(db.updateCourse)
-	.delete(db.deleteCourse)
+app.get('/activities/:ActivityID/courses/:courseID/activitydays', db.getAllActivityDaysOfTheCourse)
+//CREATE ACTIVITY DAY - POST
 
-app.route('/activities/:ActivityID/courses/:courseID/today')
-   .get(db.getTodayActivities)
+app.get('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini', db.getActivityDay)
+app.put('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini', db.open_closeActivityDay)
+app.delete('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini', db.anulateActivityday)
 
-app.route('/activities/:ActivityID/courses/:courseID/activitydays')
-   .get(db.getAllActivityDaysOfTheCourse)
-
-app.route('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini')
-   .get(db.getActivityDay)
-   .put(db.open_closeActivityDay)
-   .delete(db.anulateActivityday)
-
-app.route('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini/attendees')
-   .get(db.getActivityDayAttendees)
-   .put(db.updateAttendees)
+app.get('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.getActivityDayAttendees)
+app.put('/activities/:ActivityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees)
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
