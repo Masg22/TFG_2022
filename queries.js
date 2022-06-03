@@ -1,8 +1,3 @@
-const { parse } = require('dotenv')
-const { query } = require('express')
-const req = require('express/lib/request')
-const res = require('express/lib/response')
-
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: process.env.PG_USER,
@@ -19,7 +14,7 @@ Date.prototype.addDays = function(days) {
 }
 
 //PEOPLE
-const getAllPeople = (req, res) => {
+const getAllPeople = (request, response) => {
     pool.query(
         'SELECT * FROM people ORDER BY name ASC',
         (error, results) => {
@@ -31,8 +26,8 @@ const getAllPeople = (req, res) => {
     )
 }
 
-const createPerson = (req, res) => {
-    const { name, surnames, age, gender, emailAddress, isAUser, password, phone } = req.body
+const createPerson = (request, response) => {
+    const { name, surnames, age, gender, emailAddress, isAUser, password, phone } = request.body
 
     pool.query(
         'INSERT INTO people( name, surnames, age, gender, emailAddress, isAUser, password, phone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
@@ -41,12 +36,12 @@ const createPerson = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(201).send(`Person added with PersonID: ${results.personID}`)
+            response.status(201).send(`Person added with PersonID: ${results.personID}`)
         }
     )
 }
 
-const getPersonByID = (req, res) => {
+const getPersonByID = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
@@ -57,15 +52,15 @@ const getPersonByID = (req, res) => {
                 throw error
             }
             
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const updatePersonalData = (req, res) => {
+const updatePersonalData = (request, response) => {
     const id = parseInt(request.params.personID)
 
-    const { name, surname, age, gender, email } = req.body
+    const { name, surname, age, gender, email } = request.body
 
     pool.query(
         'UPDATE people SET name = $1, surname = $2, age = $3, gender = $4, emailAddress = $5 WHERE personID = $6',
@@ -75,15 +70,15 @@ const updatePersonalData = (req, res) => {
                 throw error
             }
             
-            res.status(200).send(`Personal data of personID ${id} has been modified`)
+            response.status(200).send(`Personal data of personID ${id} has been modified`)
         }
     )
 }
 
-const unsubscribe = (req, res) => {
+const unsubscribe = (request, response) => {
     const id = parseInt(request.params.personID)
 
-    const { active } = req.body
+    const { active } = request.body
 
     pool.query(
         'UPDATE people SET active = $1 WHERE personID = $2',
@@ -92,14 +87,14 @@ const unsubscribe = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`personID ${id} has been changed his active field`)
+            response.status(200).send(`personID ${id} has been changed his active field`)
         }
     )
 }
 
 //RESPONSIBLE
 
-const getAllResponsibles = (req, res) => {
+const getAllResponsibles = (request, response) => {
     pool.query(
         'SELECT * FROM people WHERE isAUser = true ORDER BY name ASC',
         (error, results) => {
@@ -111,9 +106,9 @@ const getAllResponsibles = (req, res) => {
     )
 }
 
-const getResonsiblesCourses = (req, res) => {
+const getResonsiblesCourses = (request, response) => {
 
-    const id = parseInt(req.params.personID)
+    const id = parseInt(request.params.personID)
 
     pool.query(
         'SELECT * FROM activities WHERE responsible = $1 ORDER BY name ASC',
@@ -128,7 +123,7 @@ const getResonsiblesCourses = (req, res) => {
 }
 
 //ACTIVITIES
-const getAllActivities = (req, res) => {
+const getAllActivities = (request, response) => {
    
     pool.query(
         'SELECT * FROM activities',
@@ -136,13 +131,13 @@ const getAllActivities = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 } 
 
-const createActivity = (req, res) => {
-    const { activityname, activitydescription } = req.body
+const createActivity = (request, response) => {
+    const { activityname, activitydescription } = request.body
 
     pool.query(
         'INSERT INTO activities( activityname, activitydescription, generalstats, totalparticipants) VALUES ($1, $2, null, null)',
@@ -151,13 +146,13 @@ const createActivity = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(201).send(`Activity added with ActivityID: ${results.activityID}`)
+            response.status(201).send(`Activity added with ActivityID: ${results.activityID}`)
         }
     )
 }
 
-const getActivityByID = (req, res) => {
-    const id = parseInt(req.params.activityID)
+const getActivityByID = (request, response) => {
+    const id = parseInt(request.params.activityID)
 
     pool.query(
         'SELECT * FROM activities WHERE activityID = $1'
@@ -166,14 +161,14 @@ const getActivityByID = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const updateActivity = (req, res) => {
-    const id = parseInt(req.params.activityID)
-    const {activityname, activitydescription, generalstats, totalparticipants} = req.body
+const updateActivity = (request, response) => {
+    const id = parseInt(request.params.activityID)
+    const {activityname, activitydescription, generalstats, totalparticipants} = request.body
 
     pool.query(
         'UPDATE activities SET activityname = $1, activitydescription = $2, generalstats = $3, totalparticipants = $4 WHERE acivityID = $5',
@@ -182,13 +177,13 @@ const updateActivity = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Activity modified with ID: ${id}`)
+            response.status(200).send(`Activity modified with ID: ${id}`)
             }
     )
 }
 
-const deleteActivity = (req, res) => {
-    const id = parseInt(req.params.activityID)
+const deleteActivity = (request, response) => {
+    const id = parseInt(request.params.activityID)
   
     pool.query(
         'DELETE FROM activities WHERE id = $1', 
@@ -197,14 +192,14 @@ const deleteActivity = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Activity deleted with ID: ${id}`)
+            response.status(200).send(`Activity deleted with ID: ${id}`)
         }
     )
 }
 
 //COURSES
 
-const getAllCourses = (req, res) => {
+const getAllCourses = (request, response) => {
    
     pool.query(
         'SELECT * FROM courses',
@@ -212,14 +207,14 @@ const getAllCourses = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const getActivityCourses = (req, res) => {
+const getActivityCourses = (request, response) => {
 
-    const activityID = parseInt(req.params.activityID)
+    const activityID = parseInt(request.params.activityID)
 
     pool.query(
         'SELECT * FROM courses WHERE activityID = $1',
@@ -228,16 +223,16 @@ const getActivityCourses = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const createActivityCourse = (req, res) => {
+const createActivityCourse = (request, response) => {
 
-    const activityID = parseInt(req.params.activityID)
+    const activityID = parseInt(request.params.activityID)
 
-    const { coursename, dateini, dateend, schedule, responsible} = req.body
+    const { coursename, dateini, dateend, schedule, responsible} = request.body
 
     const courseID = ""
 
@@ -249,7 +244,7 @@ const createActivityCourse = (req, res) => {
                 throw error
             }
             courseID = results.courseID
-            res.status(201).send(`Course added with ActivityID: ${activityID} and CourseID: ${courseID}`)
+            response.status(201).send(`Course added with ActivityID: ${activityID} and CourseID: ${courseID}`)
         }
     )
 
@@ -280,9 +275,9 @@ const createActivityCourse = (req, res) => {
     }
 }
 
-const getCourseByID = (req, res) => {
-    const activityId = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
+const getCourseByID = (request, response) => {
+    const activityId = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
 
     pool.query(
         'SELECT * FROM activities WHERE activityID = $1 and courseID = $2'
@@ -291,15 +286,15 @@ const getCourseByID = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const updateCourse = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
-    const {coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsible} = req.body
+const updateCourse = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const {coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsible} = request.body
 
     pool.query(
         'UPDATE courses SET coursename = $1, dateini = $2, dateend = $3, schedule = $4, courseparticipants = $5, coursestats = $6, responsible = $7 WHERE acivityID = $8 and courseID = $9',
@@ -308,14 +303,14 @@ const updateCourse = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Course modified with ID: ${activityID}, ${courseID}`)
+            response.status(200).send(`Course modified with ID: ${activityID}, ${courseID}`)
             }
     )
 }
 
-const deleteCourse = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
+const deleteCourse = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
   
     pool.query(
         'DELETE FROM activities WHERE acivityID = $1 and courseID = $2', 
@@ -324,14 +319,14 @@ const deleteCourse = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Activity deleted with ID: ${activityID}, ${courseID}`)
+            response.status(200).send(`Activity deleted with ID: ${activityID}, ${courseID}`)
         }
     )
 }
 
 //ACTIVITYDAY
 
-const getTodayActivities = (req, res) => {
+const getTodayActivities = (request, response) => {
     let ts = Date.now()
     let date_ob = new Date(ts)
     let date = date_ob.getDate()
@@ -347,14 +342,14 @@ const getTodayActivities = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const getAllActivityDaysOfTheCourse = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
+const getAllActivityDaysOfTheCourse = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
 
     pool.query(
         'SELECT * FROM activitydays WHERE activityID = $1 and courseID = $2',
@@ -363,16 +358,16 @@ const getAllActivityDaysOfTheCourse = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const getActivityDay = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
-    const day = req.params.day
-    const timeini = req.params.timeini
+const getActivityDay = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const day = request.params.day
+    const timeini = request.params.timeini
 
     pool.query(
         'SELECT * FROM activitydays WHERE activityID = $1 and courseID = $2 and day = $3 and timeini = $4',
@@ -381,18 +376,18 @@ const getActivityDay = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
 }
 
-const open_closeActivityDay = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
-    const day = req.params.day
-    const timeini = req.params.timeini
+const open_closeActivityDay = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const day = request.params.day
+    const timeini = request.params.timeini
 
-    const {closed} = req.body
+    const {closed} = request.body
 
     pool.query(
         'UPDATE activitydays SET closed = $1 WHERE acivityID = $2 and courseID = $3 and day = $4 and timeini = $5',
@@ -401,16 +396,16 @@ const open_closeActivityDay = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`activitiday ${activityID},${courseID},${day},${timeini} have been modified to closed: ${closed}`)
+            response.status(200).send(`activitiday ${activityID},${courseID},${day},${timeini} have been modified to closed: ${closed}`)
         }
     )
 }
 
-const anulateActivityday = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
+const anulateActivityday = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
 
-    const { day, timeini } = req.body
+    const { day, timeini } = request.body
 
     pool.query(
         'DELETE FROM activitydays WHERE acivityID = $1 and courseID = $2 and day = $3 and timeini = $4', 
@@ -419,18 +414,18 @@ const anulateActivityday = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Activityday deleted with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
+            response.status(200).send(`Activityday deleted with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
         }
     )
 }
 
 //ATTENDEES
 
-const getActivityDayAttendees = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
-    const day = req.params.day
-    const timeini = req.params.timeini
+const getActivityDayAttendees = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const day = request.params.day
+    const timeini = request.params.timeini
 
     pool.query(
         'SELECT a.personID, p.name, p.surname, p.emailAddress, a.ttended, a.late  FROM attendees a natural inner join people p WHERE a.acivityID = $1 and a.courseID = $2 and a.day = $3 and a.timeini = $4',
@@ -439,18 +434,18 @@ const getActivityDayAttendees = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Activityday deleted with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
+            response.status(200).send(`Activityday deleted with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
         }
     )
 }
 
-const updateAttendees = (req, res) => {
-    const activityID = parseInt(req.params.activityID)
-    const courseID = parseInt(req.params.courseID)
-    const day = req.params.day
-    const timeini = req.params.timeini
+const updateAttendees = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const day = request.params.day
+    const timeini = request.params.timeini
 
-    const { attened, late, timelate, persons } = req.body
+    const { attened, late, timelate, persons } = request.body
 
     const queryPersons = ''
     for (i = 0; i < persons.length; ++i){
@@ -465,14 +460,14 @@ const updateAttendees = (req, res) => {
             if (error) {
                 throw error
             }
-            res.status(200).send(`Attendees updated: ${res.length}`)
+            response.status(200).send(`Attendees updated: ${response.length}`)
         }
     )
 }
 
 //INSCRIPTIONS
 
-const getPersonInscriptions = (req, res) => {
+const getPersonInscriptions = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
@@ -483,7 +478,36 @@ const getPersonInscriptions = (req, res) => {
                 throw error
             }
             
-            res.status(200).json(results.rows)
+            response.status(200).json(results.rows)
         }
     )
+}
+
+
+module.exports = {
+    getAllPeople,
+    createPerson,
+    getPersonByID,
+    updatePersonalData,
+    unsubscribe,
+    getAllResponsibles,
+    getResonsiblesCourses,
+    getAllActivities,
+    createActivity,
+    getActivityByID,
+    updateActivity,
+    deleteActivity,
+    getAllCourses,
+    getActivityCourses,
+    createActivityCourse,
+    getCourseByID,
+    updateCourse,
+    deleteCourse,
+    getTodayActivities,
+    getAllActivityDaysOfTheCourse,
+    getActivityDay,
+    open_closeActivityDay,
+    anulateActivityday,
+    getActivityDayAttendees,
+    updateAttendees,
 }

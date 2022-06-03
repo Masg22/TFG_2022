@@ -31,6 +31,9 @@ app.get('/people/responsibles/:personID/courses', db.getResonsiblesCourses)
 
 app.get('/activities', db.getAllActivities)
 app.post('/activities', db.createActivity)
+
+app.get('/activities/:activityID', db.getActivityByID)
+app.put('/activities/:activityID', db.updateActivity)
 app.delete('/activities/:activityID', db.deleteActivity)
 
 app.get('/courses', db.getAllCourses)
