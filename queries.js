@@ -5,6 +5,9 @@ const pool = new Pool({
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
+  ssl: {
+    rejectUnauthorized: false
+  }
 })
 
 Date.prototype.addDays = function(days) {
@@ -14,7 +17,8 @@ Date.prototype.addDays = function(days) {
 }
 
 //PEOPLE
-const getAllPeople = (request, response) => {
+const getAllPeople = async(request, response) => {
+    await pool.connect()
     pool.query(
         'SELECT * FROM people ORDER BY name ASC',
         (error, results) => {
@@ -45,7 +49,7 @@ const getPersonByID = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT * FROM people WHERE personID = $1',
+        'SELECT * FROM people WHERE "personID" = $1',
         [id],
         (error, results) => {
             if (error) {
@@ -96,7 +100,8 @@ const unsubscribe = (request, response) => {
 
 const getAllResponsibles = (request, response) => {
     pool.query(
-        'SELECT * FROM people WHERE isAUser = true ORDER BY name ASC',
+        'SELECT * FROM people WHERE isAUser = True ORDER BY name ASC',
+        [],
         (error, results) => {
             if (error) {
                 throw error
@@ -111,7 +116,7 @@ const getResonsiblesCourses = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT * FROM activities WHERE responsible = $1 ORDER BY name ASC',
+        'SELECT a."activityID", c."courseID", a.activityname, a.activitydescription,c.coursename, c.coursestats, c.courseparticipants FROM courses c NATURAL INNER JOIN activities a WHERE responsible = $1 ORDER BY activityname ASC',
         [id],
         (error, results) => {
             if (error) {
@@ -151,11 +156,11 @@ const createActivity = (request, response) => {
     )
 }
 
-const getActivityByID = (request, response) => {
+const getActivityByID = (request, response) => { 
     const id = parseInt(request.params.activityID)
 
     pool.query(
-        'SELECT * FROM activities WHERE activityID = $1'
+        'SELECT * FROM activities WHERE "activityID" = $1',
         [id],
         (error, results) => {
             if (error) {
@@ -217,7 +222,7 @@ const getActivityCourses = (request, response) => {
     const activityID = parseInt(request.params.activityID)
 
     pool.query(
-        'SELECT * FROM courses WHERE activityID = $1',
+        'SELECT * FROM courses WHERE "activityID" = $1',
         [activityID],
         (error, results) => {
             if (error) {
@@ -280,7 +285,7 @@ const getCourseByID = (request, response) => {
     const courseID = parseInt(request.params.courseID)
 
     pool.query(
-        'SELECT * FROM activities WHERE activityID = $1 and courseID = $2'
+        'SELECT * FROM courses WHERE "activityID" = $1 and "courseID" = $2',
         [activityId, courseID],
         (error, results) => {
             if (error) {
@@ -327,17 +332,16 @@ const deleteCourse = (request, response) => {
 //ACTIVITYDAY
 
 const getTodayActivities = (request, response) => {
-    let ts = Date.now()
-    let date_ob = new Date(ts)
-    let date = date_ob.getDate()
-    let month = date_ob.getMonth() + 1
-    let year = date_ob.getFullYear()
+    let date_ob = new Date(Date.now())
+    let date = date_ob.getDate().toString()
+    let month = (date_ob.getMonth() + 1).toString()
+    let year = date_ob.getFullYear().toString()
 
     const today = year + "-" + month + "-" + date
 
     pool.query(
-        'SELECT * FROM activitydays WHERE date = $1 ORDER BY timeini ASC',
-        [today],
+        'SELECT * FROM activitydays WHERE day = $1',
+        [date_ob],
         (error, results) => {
             if (error) {
                 throw error
@@ -352,7 +356,7 @@ const getAllActivityDaysOfTheCourse = (request, response) => {
     const courseID = parseInt(request.params.courseID)
 
     pool.query(
-        'SELECT * FROM activitydays WHERE activityID = $1 and courseID = $2',
+        'SELECT * FROM activitydays WHERE "activityID" = $1 and "courseID" = $2',
         [activityID, courseID],
         (error, results) => {
             if (error) {
@@ -370,7 +374,7 @@ const getActivityDay = (request, response) => {
     const timeini = request.params.timeini
 
     pool.query(
-        'SELECT * FROM activitydays WHERE activityID = $1 and courseID = $2 and day = $3 and timeini = $4',
+        'SELECT * FROM activitydays WHERE "activityID" = $1 and "courseID" = $2 and day = $3 and timeini = $4',
         [activityID, courseID, day, timeini],
         (error, results) => {
             if (error) {
@@ -428,13 +432,13 @@ const getActivityDayAttendees = (request, response) => {
     const timeini = request.params.timeini
 
     pool.query(
-        'SELECT a.personID, p.name, p.surname, p.emailAddress, a.ttended, a.late  FROM attendees a natural inner join people p WHERE a.acivityID = $1 and a.courseID = $2 and a.day = $3 and a.timeini = $4',
+        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late  FROM attendees a natural inner join people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
         [activityID, courseID, day, timeini], 
         (error, results) => {
             if (error) {
                 throw error
             }
-            response.status(200).send(`Activityday deleted with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
+            response.status(200).json(results.rows)
         }
     )
 }
