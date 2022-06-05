@@ -120,6 +120,7 @@ const getResonsiblesCourses = (request, response) => {
         [id],
         (error, results) => {
             if (error) {
+                res.status(500).json({ message: 'Error gettin Responsible courses', err: `${error}` });
                 throw error
               }
               response.status(200).json(results.rows)
