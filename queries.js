@@ -336,7 +336,7 @@ const deleteCourse = (request, response) => {
 
 const getTodayActivities = (request, response) => {
     pool.query(
-        'SELECT d.*, c.responsible FROM courses c NATURAL INNER JOIN activitydays d WHERE d.day = CURRENT_DATE;',
+        'SELECT d.*, a.activityname, a.activitydescription, c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE d.day = CURRENT_DATE;',
         (error, results) => {
             if (error) {
                 response.status(500).send(`error`)
