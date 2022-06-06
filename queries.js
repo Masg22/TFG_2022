@@ -1,3 +1,5 @@
+const { json } = require('express/lib/response');
+
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: process.env.PG_USER,
@@ -116,11 +118,11 @@ const getResonsiblesCourses = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT a."activityID", c."courseID", a.activityname, a.activitydescription,c.coursename, c.coursestats, c.courseparticipants FROM courses c NATURAL INNER JOIN activities a WHERE responsible = $1 ORDER BY activityname ASC',
+        'SELECT a."activityID", c."courseID", a.activityname, a.activitydescription, c.coursename,c.coursestats, c.courseparticipants FROM courses c NATURAL INNER JOIN activities a WHERE responsible = $1 ORDER BY activityname ASC',
         [id],
         (error, results) => {
             if (error) {
-                res.status(500).json({ message: 'Error gettin Responsible courses', err: `${error}` });
+                res.status(500).json({ message: 'Error gettin Responsible courses', err: `${error}` })
                 throw error
               }
               response.status(200).json(results.rows)
@@ -165,7 +167,7 @@ const getActivityByID = (request, response) => {
         [id],
         (error, results) => {
             if (error) {
-                throw error
+                response.status(500).send(`jaja salu2`)
             }
             response.status(200).json(results.rows)
         }
@@ -333,19 +335,11 @@ const deleteCourse = (request, response) => {
 //ACTIVITYDAY
 
 const getTodayActivities = (request, response) => {
-    let date_ob = new Date(Date.now())
-    let date = date_ob.getDate().toString()
-    let month = (date_ob.getMonth() + 1).toString()
-    let year = date_ob.getFullYear().toString()
-
-    const today = year + "-" + month + "-" + date
-
     pool.query(
-        'SELECT * FROM activitydays WHERE day = $1',
-        [date_ob],
+        'SELECT d.*, c.responsible FROM courses c NATURAL INNER JOIN activitydays d WHERE d.day = CURRENT_DATE;',
         (error, results) => {
             if (error) {
-                throw error
+                response.status(500).send(`error`)
             }
             response.status(200).json(results.rows)
         }
