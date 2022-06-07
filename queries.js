@@ -427,7 +427,7 @@ const getActivityDayAttendees = (request, response) => {
     const timeini = request.params.timeini
 
     pool.query(
-        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late  FROM attendees a NATURAL INNER JOIN inner join people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
+        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late  FROM attendees a NATURAL INNER JOIN people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
         [activityID, courseID, day, timeini], 
         (error, results) => {
             if (error) {
