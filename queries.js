@@ -427,7 +427,7 @@ const getActivityDayAttendees = (request, response) => {
     const timeini = request.params.timeini
 
     pool.query(
-        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late  FROM attendees a natural inner join people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
+        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late  FROM attendees a NATURAL INNER JOIN inner join people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
         [activityID, courseID, day, timeini], 
         (error, results) => {
             if (error) {
@@ -446,14 +446,15 @@ const updateAttendees = (request, response) => {
 
     const { attened, late, timelate, persons } = request.body
 
+    var query = `UPDATE attendees SET attended = ${attened}, late = ${late}, timelate = ${timelate} WHERE "activityID" = ${activityID}  and "courseID" = ${courseID} and day = '${day}' and timeini = '${timeini}' and "personID" IN (${persons})`
+
     pool.query( 
-        'UPDATE attendees SET attended = $1, late = $2, timelate = $3 WHERE acivityID = $4 and courseID = $5 and day = $6 and timeini = $7 and personID IN ($8)',
-        [attened, late, timelate, activityID, courseID, day, timeini, persons], 
+        query, 
         (error, results) => {
             if (error) {
                 throw error
             }
-            response.status(200).send(`Attendees updated: ${response.length}`)
+            response.status(200).send(`Attendees updated`)
         }
     )
 }
