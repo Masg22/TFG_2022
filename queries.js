@@ -446,15 +446,9 @@ const updateAttendees = (request, response) => {
 
     const { attened, late, timelate, persons } = request.body
 
-    const queryPersons = ''
-    for (i = 0; i < persons.length; ++i){
-        queryPersons.concat([',', persons[i]])
-    }
-
-
     pool.query( 
         'UPDATE attendees SET attended = $1, late = $2, timelate = $3 WHERE acivityID = $4 and courseID = $5 and day = $6 and timeini = $7 and personID IN ($8)',
-        [attened, late, timelate, activityID, courseID, day, timeini, queryPersons], 
+        [attened, late, timelate, activityID, courseID, day, timeini, persons], 
         (error, results) => {
             if (error) {
                 throw error
