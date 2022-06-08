@@ -444,9 +444,11 @@ const updateAttendees = (request, response) => {
     const day = request.params.day
     const timeini = request.params.timeini
 
-    const { attened, late, timelate, persons } = request.body
+    const { attended, late, timelate, persons } = request.body
 
-    var query = `UPDATE attendees SET attended = ${attened}, late = ${late}, timelate = ${timelate} WHERE "activityID" = ${activityID}  and "courseID" = ${courseID} and day = '${day}' and timeini = '${timeini}' and "personID" IN (${persons})`
+    var query = `UPDATE attendees SET attended = ${attended}, late = ${late}, timelate = '${timelate}' WHERE "activityID" = ${activityID}  and "courseID" = ${courseID} and day = '${day}' and timeini = '${timeini}' and "personID" IN (${persons})`
+
+    console.log(query)
 
     pool.query( 
         query, 
