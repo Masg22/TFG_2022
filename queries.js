@@ -1,3 +1,4 @@
+const { query } = require('express');
 const { json } = require('express/lib/response');
 
 const Pool = require('pg').Pool
@@ -446,9 +447,14 @@ const updateAttendees = (request, response) => {
 
     const { attended, late, timelate, persons } = request.body
 
+    console.log('attended: ' + attended)
+    console.log('late: ' + late)
+    console.log('timelate: ' + timelate)
+    console.log('persons: ' + persons)
+
     var query = `UPDATE attendees SET attended = ${attended}, late = ${late}, timelate = '${timelate}' WHERE "activityID" = ${activityID}  and "courseID" = ${courseID} and day = '${day}' and timeini = '${timeini}' and "personID" IN (${persons})`
 
-    console.log(query)
+    console.log('query: ' + query)
 
     pool.query( 
         query, 
@@ -475,6 +481,146 @@ const getPersonInscriptions = (request, response) => {
             }
             
             response.status(200).json(results.rows)
+        }
+    )
+}
+
+const generateStatsActivity = (request, response) => {
+    
+    const activityID = parseInt(request.params.activityID)
+
+    pool.query(
+        'SELECT att.attended, att.late, COUNT(*) AS PEOPLE FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE "activityID"=$1 AND ad.closed = true GROUP BY att.attended, att.late',
+        [activityID],
+        (error, results1) => {
+            if (error) {
+                throw error
+            }
+            pool.query(
+                'SELECT p.gender, COUNT(*) AS PERSONS FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1 GROUP BY p.gender',
+                [activityID],
+                (error, results2) => {
+                    if (error) {
+                        throw error
+                    }
+                    pool.query(
+                        'SELECT SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS Under_18, SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS _18_25, SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS _26_35, SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS _36_45, SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS Over_45 FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1',
+                        [activityID],
+                        (error, results3) => {
+                            if (error) {
+                                throw error
+                            }
+                            pool.query(
+                                'SELECT COUNT(*) AS PERSONS FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1',
+                                [activityID],
+                                (error, results4) => {
+                                    if (error) {
+                                        throw error
+                                    }
+                                    pool.query(
+                                        'SELECT a."activityID", a.activityname, c."courseID", c.coursename, SUM(CASE WHEN att.attended THEN 1 ELSE 0 END)*100/COUNT(*) AS PERCENTAGE FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE "activityID"=$1 GROUP BY a."activityID", c."courseID", c.coursename ORDER BY (SUM(CASE WHEN att.attended THEN 1 ELSE 0 END)/COUNT(*)) LIMIT 3',
+                                        [activityID],
+                                        (error, results5) => {
+                                            if (error) {
+                                                throw error
+                                            }
+                                            response.status(200).json({'attendees': results1.rows, 'gender': results2.rows, 'age': results3.rows, 'participants': results4.rows, 'top3': results5.rows})
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+}
+
+const generateStatsCourse = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+
+    pool.query(
+        'SELECT att.attended, att.late, COUNT(*) AS PEOPLE FROM courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE "activityID"=$1 AND "courseID"=$2 AND ad.closed = true GROUP BY att.attended, att.late',
+        [activityID,courseID],
+        (error, results1) => {
+            if (error) {
+                throw error
+            }
+            pool.query(
+                'SELECT p.gender, COUNT(*) AS PERSONS FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1 AND "courseID"=$2 GROUP BY p.gender',
+                [activityID,courseID],
+                (error, results2) => {
+                    if (error) {
+                        throw error
+                    }
+                    pool.query(
+                        'SELECT SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS Under_18, SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS _18_25, SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS _26_35, SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS _36_45, SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS Over_45 FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1 AND "courseID"=$2',
+                        [activityID,courseID],
+                        (error, results3) => {
+                            if (error) {
+                                throw error
+                            }
+                            pool.query(
+                                'SELECT COUNT(*) AS PERSONS FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p WHERE "activityID"=$1 AND "courseID"=$2',
+                                [activityID,courseID],
+                                (error, results4) => {
+                                    if (error) {
+                                        throw error
+                                    }
+                                    response.status(200).json({'attendees': results1.rows, 'gender': results2.rows, 'age': results3.rows, 'participants': results4.rows})
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+}
+
+const generateStatsGeneral = (request, response) => {
+    
+    pool.query(
+        'SELECT att.attended, att.late, COUNT(*) AS PEOPLE FROM attendees att NATURAL INNER JOIN activitydays ad WHERE (att.day BETWEEN CURRENT_DATE - 7 AND CURRENT_DATE) AND ad.closed = true GROUP BY att.attended, att.late',
+        (error, results1) => {
+            if (error) {
+                throw error
+            }
+            pool.query(
+                'SELECT p.gender, COUNT(*) AS PERSONS FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY p.gender',
+                (error, results2) => {
+                    if (error) {
+                        throw error
+                    }
+                    pool.query(
+                        'SELECT SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS Under_18, SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS _18_25, SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS _26_35, SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS _36_45, SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS Over_45 FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p',
+                        (error, results3) => {
+                            if (error) {
+                                throw error
+                            }
+                            pool.query(
+                                'SELECT COUNT(*) AS PERSONS FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p',
+                                (error, results4) => {
+                                    if (error) {
+                                        throw error
+                                    }
+                                    pool.query(
+                                        'SELECT "activityID", activityname, SUM(CASE WHEN att.attended THEN 1 ELSE 0 END)*100/COUNT(*) AS PERCENTAGE FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att GROUP BY "activityID" ORDER BY (SUM(CASE WHEN att.attended THEN 1 ELSE 0 END)/COUNT(*)) LIMIT 3',
+                                        (error, results5) => {
+                                            if (error) {
+                                                throw error
+                                            }
+                                            response.status(200).json({'attendees': results1.rows, 'gender': results2.rows, 'age': results3.rows, 'participants': results4.rows, 'top3': results5.rows})
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
         }
     )
 }
@@ -506,4 +652,7 @@ module.exports = {
     anulateActivityday,
     getActivityDayAttendees,
     updateAttendees,
+    generateStatsGeneral,
+    generateStatsActivity,
+    generateStatsCourse,
 }

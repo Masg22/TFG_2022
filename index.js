@@ -32,11 +32,15 @@ app.get('/people/responsibles/:personID/courses', db.getResonsiblesCourses) //OK
 app.get('/activities', db.getAllActivities) //OK
 app.post('/activities', db.createActivity)
 
-app.get('/activities/today', db.getTodayActivities) //CHECK - date format - join C & A
+app.get('/activities/generalstats', db.generateStatsGeneral) //OK
+
+app.get('/activities/today', db.getTodayActivities) //OK
 
 app.get('/activities/:activityID', db.getActivityByID) //OK
 app.put('/activities/:activityID', db.updateActivity)
 app.delete('/activities/:activityID', db.deleteActivity)
+
+app.get('/activities/:activityID/activitystats', db.generateStatsActivity) 
 
 app.get('/courses', db.getAllCourses) //OK
 app.get('/activities/:activityID/courses', db.getActivityCourses) //OK
@@ -46,15 +50,17 @@ app.get('/activities/:activityID/courses/:courseID', db.getCourseByID) //OK
 app.put('/activities/:activityID/courses/:courseID', db.updateCourse)
 app.delete('/activities/:activityID/courses/:courseID', db.deleteCourse)
 
+app.get('/activities/:activityID/courses/:courseID/coursestats', db.generateStatsCourse) //OK
+
 app.get('/activities/:activityID/courses/:courseID/activitydays', db.getAllActivityDaysOfTheCourse) //OK
 //CREATE ACTIVITY DAY - POST
 
-app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini', db.getActivityDay) //OK ~revisar con datos
-app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini', db.open_closeActivityDay)
+app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini', db.getActivityDay) //OK 
+app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini', db.open_closeActivityDay) //OK
 app.delete('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini', db.anulateActivityday)
 
-app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.getActivityDayAttendees) //OK ~revisar con datos
-app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees)
+app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.getActivityDayAttendees) //OK
+app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees) //OK
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
