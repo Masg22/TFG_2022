@@ -194,13 +194,49 @@ const deleteActivity = (request, response) => {
     const id = parseInt(request.params.activityID)
   
     pool.query(
-        'DELETE FROM activities WHERE id = $1', 
+        'DELETE FROM attendees WHERE "activityID" = $1', 
         [id], 
         (error, results) => {
             if (error) {
                 throw error
             }
-            response.status(200).send(`Activity deleted with ID: ${id}`)
+            pool.query(
+                'DELETE FROM inscriptions WHERE "activityID" = $1',
+                [id], 
+                (error, results) => {
+                    if (error) {
+                        throw error
+                    }
+                    pool.query(
+                        'DELETE FROM activitydays WHERE "activityID" = $1',
+                        [id],
+                        (error, results) => {
+                            if (error) {
+                                throw error
+                            }
+                            pool.query(
+                                'DELETE FROM courses WHERE "activityID" = $1',
+                                [id],
+                                (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    }
+                                    pool.query(
+                                        'DELETE FROM activities WHERE "activityID" = $1',
+                                        [id],
+                                        (error, results) => {
+                                            if (error) {
+                                                throw error
+                                            }
+                                            response.status(200).send(`Activity deleted with ID: ${id}`)
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
         }
     )
 }
