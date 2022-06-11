@@ -69,7 +69,7 @@ const updatePersonalData = (request, response) => {
     const { name, surname, age, gender, email } = request.body
 
     pool.query(
-        'UPDATE people SET name = $1, surname = $2, age = $3, gender = $4, emailAddress = $5 WHERE personID = $6',
+        'UPDATE people SET name = $1, surname = $2, age = $3, gender = $4, emailAddress = $5 WHERE "personID" = $6',
         [name, surname, age, gender, email, id],
         (error, results) => {
             if (error) {
