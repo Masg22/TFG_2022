@@ -66,11 +66,11 @@ const getPersonByID = (request, response) => {
 const updatePersonalData = (request, response) => {
     const id = parseInt(request.params.personID)
 
-    const { name, surname, age, gender, email } = request.body
+    const { name, surnames, age, gender, emailAddress } = request.body
 
     pool.query(
-        'UPDATE people SET name = $1, surname = $2, age = $3, gender = $4, emailAddress = $5 WHERE "personID" = $6',
-        [name, surname, age, gender, email, id],
+        'UPDATE people SET name = $1, surnames = $2, age = $3, gender = $4, "emailAddress" = $5 WHERE "personID" = $6',
+        [name, surnames, age, gender, emailAddress, id],
         (error, results) => {
             if (error) {
                 throw error
