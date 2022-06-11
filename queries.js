@@ -179,7 +179,7 @@ const updateActivity = (request, response) => {
     const {activityname, activitydescription, generalstats, totalparticipants} = request.body
 
     pool.query(
-        'UPDATE activities SET activityname = $1, activitydescription = $2, generalstats = $3, totalparticipants = $4 WHERE acivityID = $5',
+        'UPDATE activities SET activityname = $1, activitydescription = $2, generalstats = $3, totalparticipants = $4 WHERE "activityID" = $5',
         [activityname, activitydescription, generalstats, totalparticipants, id],
         (error, results) => {
             if (error) {
@@ -270,7 +270,7 @@ const createActivityCourse = (request, response) => {
         for(i=0; i<finalSch.length; ++i){
             if (it.getDay() == finalSch[i][0]){
                 pool.query(
-                    'INSERT INTO activitydays(activityID, courseID, day, timeini, timeend) VALUES($1, $2, $3, $4, $5)',
+                    'INSERT INTO activitydays("activityID","courseID", day, timeini, timeend) VALUES($1, $2, $3, $4, $5)',
                     [activityID, courseID, it, finalSch[i][1], finalSch[i][2]],
                     (error, results) => {
                         if (error) {
@@ -305,7 +305,7 @@ const updateCourse = (request, response) => {
     const {coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsible} = request.body
 
     pool.query(
-        'UPDATE courses SET coursename = $1, dateini = $2, dateend = $3, schedule = $4, courseparticipants = $5, coursestats = $6, responsible = $7 WHERE acivityID = $8 and courseID = $9',
+        'UPDATE courses SET coursename = $1, dateini = $2, dateend = $3, schedule = $4, courseparticipants = $5, coursestats = $6, responsible = $7 WHERE "activityID" = $8 and courseID = $9',
         [coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsible, activityID, courseID],
         (error, results) => {
             if (error) {
@@ -321,7 +321,7 @@ const deleteCourse = (request, response) => {
     const courseID = parseInt(request.params.courseID)
   
     pool.query(
-        'DELETE FROM activities WHERE acivityID = $1 and courseID = $2', 
+        'DELETE FROM activities WHERE "activityID" = $1 and "courseID" = $2', 
         [activityID, courseID], 
         (error, results) => {
             if (error) {
@@ -407,7 +407,7 @@ const anulateActivityday = (request, response) => {
     const { day, timeini } = request.body
 
     pool.query(
-        'DELETE FROM activitydays WHERE acivityID = $1 and courseID = $2 and day = $3 and timeini = $4', 
+        'DELETE FROM activitydays WHERE "activityID" = $1 and "courseID" = $2 and day = $3 and timeini = $4', 
         [activityID, courseID, day, timeini], 
         (error, results) => {
             if (error) {
