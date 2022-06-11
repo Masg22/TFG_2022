@@ -20,10 +20,9 @@ Date.prototype.addDays = function(days) {
 }
 
 //PEOPLE
-const getAllPeople = async(request, response) => {
-    await pool.connect()
+const getAllPeople = (request, response) => {
     pool.query(
-        'SELECT * FROM people ORDER BY name ASC',
+        'SELECT * FROM people WHERE active = true ORDER BY name ASC',
         (error, results) => {
             if (error) {
                 throw error
@@ -37,7 +36,7 @@ const createPerson = (request, response) => {
     const { name, surnames, age, gender, emailAddress, isAUser, password, phone } = request.body
 
     pool.query(
-        'INSERT INTO people( name, surnames, age, gender, emailAddress, isAUser, password, phone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO people( name, surnames, age, gender, "emailAddress", "isAUser", password, phone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
         [name, surnames, age, gender, emailAddress, isAUser, password, phone],
         (error, results) => {
             if (error) {
@@ -52,7 +51,7 @@ const getPersonByID = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT * FROM people WHERE "personID" = $1',
+        'SELECT * FROM people WHERE "personID" = $1 AND active = true',
         [id],
         (error, results) => {
             if (error) {
@@ -82,7 +81,7 @@ const updatePersonalData = (request, response) => {
     )
 }
 
-const unsubscribe = (request, response) => {
+const unsubscribe_subscribe = (request, response) => {
     const id = parseInt(request.params.personID)
 
     const { active } = request.body
@@ -631,7 +630,7 @@ module.exports = {
     createPerson,
     getPersonByID,
     updatePersonalData,
-    unsubscribe,
+    unsubscribe_subscribe,
     getAllResponsibles,
     getResonsiblesCourses,
     getAllActivities,

@@ -21,7 +21,7 @@ app.post('/people', db.createPerson)
 
 app.get('/people/:personID', db.getPersonByID) //OK
 app.put('/people/:personID', db.updatePersonalData)
-app.put('/people/:personID', db.unsubscribe)
+app.put('/people/:personID', db.unsubscribe_subscribe)
 
 app.get('/people/responsibles', db.getAllResponsibles) //CHECK
 
