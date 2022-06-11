@@ -424,7 +424,7 @@ const getAllActivityDaysOfTheCourse = (request, response) => {
     const courseID = parseInt(request.params.courseID)
 
     pool.query(
-        'SELECT * FROM activitydays WHERE "activityID" = $1 and "courseID" = $2',
+        'SELECT d.*, a.activityname, a.activitydescription, c.coursename, c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE a."activityID" = $1 and c."courseID"= $2',
         [activityID, courseID],
         (error, results) => {
             if (error) {
