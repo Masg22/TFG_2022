@@ -87,7 +87,7 @@ const unsubscribe_subscribe = (request, response) => {
     const { active } = request.body
 
     pool.query(
-        'UPDATE people SET active = $1 WHERE personID = $2',
+        'UPDATE people SET active = $1 WHERE "personID" = $2',
         [active, id],
         (error, results) => {
             if (error) {
