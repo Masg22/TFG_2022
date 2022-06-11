@@ -357,6 +357,43 @@ const deleteCourse = (request, response) => {
     const courseID = parseInt(request.params.courseID)
   
     pool.query(
+        'DELETE FROM attendees WHERE "activityID" = $1 and "courseID" = $2', 
+        [activityID, courseID], 
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            pool.query(
+                'DELETE FROM inscriptions WHERE "activityID" = $1 and "courseID" = $2',
+                [activityID, courseID], 
+                (error, results) => {
+                    if (error) {
+                        throw error
+                    }
+                    pool.query(
+                        'DELETE FROM activitydays WHERE "activityID" = $1 and "courseID" = $2',
+                        [activityID, courseID],
+                        (error, results) => {
+                            if (error) {
+                                throw error
+                            }
+                            pool.query(
+                                'DELETE FROM courses WHERE "activityID" = $1 and "courseID" = $2',
+                                [activityID, courseID],
+                                (error, results) => {
+                                    if (error) {
+                                        throw error
+                                    }
+                                    response.status(200).send(`Activity deleted with ID: ${activityID}, ${courseID}`)
+                                }    
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+    pool.query(
         'DELETE FROM activities WHERE "activityID" = $1 and "courseID" = $2', 
         [activityID, courseID], 
         (error, results) => {
