@@ -225,7 +225,7 @@ const getActivityCourses = (request, response) => {
     const activityID = parseInt(request.params.activityID)
 
     pool.query(
-        'SELECT * FROM courses WHERE "activityID" = $1',
+        'SELECT * FROM courses WHERE "activityID" = $1 ORDER BY dateini, dateend DESC',
         [activityID],
         (error, results) => {
             if (error) {
