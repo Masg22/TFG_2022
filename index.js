@@ -62,7 +62,7 @@ app.delete('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini
 app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.getActivityDayAttendees) //OK
 app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees) //OK
 
-app.get('//activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendance', db.getActivityDayAttendance)
+app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendance', db.getActivityDayAttendance)
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
