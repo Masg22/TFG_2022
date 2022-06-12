@@ -1,3 +1,4 @@
+const { request } = require('express');
 const { query } = require('express');
 const { json } = require('express/lib/response');
 
@@ -491,6 +492,24 @@ const anulateActivityday = (request, response) => {
     )
 }
 
+const createActivityDay = (request, response) => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+
+    const { day, timeini, timeend} = request.body
+
+    pool.query(
+        'INSERT INTO activitydays ("activityID", "courseID", day, timeini, timeend, closed) VALUES ($1, $2, $3, $4, $5, false)',
+        [activityID, courseID, day, timeini, timeend],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(201).send(`Activityday added with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
+        }
+    )
+}
+
 //ATTENDEES
 
 const getActivityDayAttendees = (request, response) => {
@@ -746,4 +765,5 @@ module.exports = {
     generateStatsActivity,
     generateStatsCourse,
     getActivityDayAttendance,
+    createActivityDay,
 }
