@@ -409,7 +409,7 @@ const deleteCourse = (request, response) => {
 
 const getTodayActivities = (request, response) => {
     pool.query(
-        'SELECT d.*, a.activityname, a.activitydescription, c.coursename,c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE d.day = CURRENT_DATE;',
+        'SELECT d.*, a.activityname, a.activitydescription, c.coursename,c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE d.day = CURRENT_DATE ORDER BY d.timeini ASC',
         (error, results) => {
             if (error) {
                 response.status(500).send(`error`)
@@ -424,7 +424,7 @@ const getAllActivityDaysOfTheCourse = (request, response) => {
     const courseID = parseInt(request.params.courseID)
 
     pool.query(
-        'SELECT d.*, a.activityname, a.activitydescription, c.coursename, c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE a."activityID" = $1 and c."courseID"= $2',
+        'SELECT d.*, a.activityname, a.activitydescription, c.coursename, c.responsible, p.name FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays d INNER JOIN people p ON c.responsible = p."personID" WHERE a."activityID" = $1 and c."courseID"= $2 ORDER BY d.day, d.timeini, d.timeend',
         [activityID, courseID],
         (error, results) => {
             if (error) {
@@ -518,7 +518,7 @@ const getActivityDayAttendance = (request, response) => {
     const timeini = request.params.timeini
 
     pool.query(
-        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late, a.timelate FROM attendees a NATURAL INNER JOIN people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4 ORDER BY a.day, a.timeini',
+        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late, a.timelate FROM attendees a NATURAL INNER JOIN people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
         [activityID, courseID, day, timeini], 
         (error, results) => {
             if (error) {
