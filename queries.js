@@ -511,7 +511,7 @@ const getActivityDayAttendees = (request, response) => {
     )
 }
 
-const getActivityDayAttendance = () => {
+const getActivityDayAttendance = (request, response) => {
     const activityID = parseInt(request.params.activityID)
     const courseID = parseInt(request.params.courseID)
     const day = request.params.day
