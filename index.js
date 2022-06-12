@@ -21,7 +21,8 @@ app.post('/people', db.createPerson)
 
 app.get('/people/:personID', db.getPersonByID) //OK
 app.put('/people/:personID', db.updatePersonalData)
-app.put('/people/:personID/unsub', db.unsubscribe_subscribe)
+app.put('/people/:personID/unsub', db.unsubscribe
+)
 
 app.get('/people/responsibles', db.getAllResponsibles) //CHECK
 
@@ -61,6 +62,8 @@ app.delete('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini
 
 app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.getActivityDayAttendees) //OK
 app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees) //OK
+
+app.get('//activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendance', db.getActivityDayAttendance)
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)

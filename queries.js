@@ -511,6 +511,24 @@ const getActivityDayAttendees = (request, response) => {
     )
 }
 
+const getActivityDayAttendance = () => {
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+    const day = request.params.day
+    const timeini = request.params.timeini
+
+    pool.query(
+        'SELECT a."personID", p.name, p.surnames, p."emailAddress", a.attended, a.late, a.timelate FROM attendees a NATURAL INNER JOIN people p WHERE a."activityID" = $1 and a."courseID" = $2 and a.day = $3 and a.timeini = $4',
+        [activityID, courseID, day, timeini], 
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(200).json(results.rows)
+        }
+    )
+}
+
 const updateAttendees = (request, response) => {
     const activityID = parseInt(request.params.activityID)
     const courseID = parseInt(request.params.courseID)
@@ -727,4 +745,5 @@ module.exports = {
     generateStatsGeneral,
     generateStatsActivity,
     generateStatsCourse,
+    getActivityDayAttendance,
 }
