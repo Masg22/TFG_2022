@@ -1,6 +1,7 @@
 const { request } = require('express');
 const { query } = require('express');
 const { json } = require('express/lib/response');
+const schedule = require('node-schedule');
 
 const Pool = require('pg').Pool
 const pool = new Pool({
@@ -18,6 +19,107 @@ Date.prototype.addDays = function(days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
     return date;
+}
+
+const triggerActivityStats = schedule.scheduleJob({hour: 23, minute: 59}, () => {
+    console.log('ActivityStatsUpdated')
+    pool.query(
+        `SELECT * FROM (SELECT a."activityID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.activities a NATURAL INNER JOIN public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY a."activityID") att FULL OUTER JOIN (SELECT a."activityID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY a."activityID") ins ON (att."ID" = ins."ID")`,
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            for (let row of results.rows) {
+                var id = row["ID"]
+                var activityStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
+                var participants = row["TotalParticipants"] 
+                
+                pool.query(
+                    'UPDATE public.activities SET generalstats=$1, totalparticipants=$2 WHERE "activityID"=$3',
+                    [activityStats, participants, id],
+                    (error, results) => {
+                        if(error){
+                            throw error
+                        }
+                    }
+                )
+            }
+        }
+    )
+})
+
+const triggerCourseStats = schedule.scheduleJob({hour:23, minute:59}, () => {
+    console.log('CourseStatsUpdated')
+    pool.query(
+        `SELECT * FROM (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY c."courseID") att FULL OUTER JOIN (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY c."courseID") ins ON (att."ID" = ins."ID")`,
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            for (let row of results.rows) {
+                var id = row["ID"]
+                var courseStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
+                var participants = row["TotalParticipants"] 
+                
+                pool.query(
+                    'UPDATE public.courses SET courseparticipants=$1, coursestats=$2 WHERE "courseID"=$3',
+                    [participants, courseStats, id],
+                    (error, results) => {
+                        if(error){
+                            throw error
+                        }
+                    }
+                )
+            }
+        }
+    )
+})
+
+const triggerClose = schedule.scheduleJob({hour:23, minute:59}, () => {
+    console.log('ClosingTodayActivities')
+    pool.query(
+        'UPDATE public.activitydays SET closed = true WHERE day <= CURRENT_DATE',
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+        }
+    )
+    pool.query(
+        'UPDATE public.courses SET closed=true WHERE dateend <= CURRENT_DATE;',
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+        }
+    )
+})
+
+const test = (request, response) => { 
+    pool.query(
+        `SELECT * FROM (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY c."courseID") att FULL OUTER JOIN (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY c."courseID") ins ON (att."ID" = ins."ID")`,
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            for (let row of results.rows) {
+                var id = row["ID"]
+                var courseStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
+                var participants = row["TotalParticipants"] 
+                
+                pool.query(
+                    'UPDATE public.courses SET courseparticipants=$1, coursestats=$2 WHERE "courseID"=$3',
+                    [participants, courseStats, id],
+                    (error, results) => {
+                        if(error){
+                            throw error
+                        }
+                    }
+                )
+            }
+            response.send('CALABAZA')
+        }
+    )
 }
 
 //PEOPLE
@@ -766,4 +868,6 @@ module.exports = {
     generateStatsCourse,
     getActivityDayAttendance,
     createActivityDay,
+    getPersonInscriptions,
+    test
 }
