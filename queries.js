@@ -794,8 +794,8 @@ const gePersonAttendanceToCourses = (request, response) => {
     const courseID = parseInt(request.params.courseID)
 
     pool.query(
-        'SELECT p."personID", c."activityID", c."courseID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM people p NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE p."personID"=7 AND ad.day < CURRENT_DATE GROUP BY p."personID", c."activityID", c."courseID"',
-        [personID, courseID],
+        'SELECT p."personID", c."activityID", c."courseID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM people p NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE p."personID"=$1 AND ad.day < CURRENT_DATE GROUP BY p."personID", c."activityID", c."courseID"',
+        [personID],
         (error, results) => {
             if (error) {
                 throw error
