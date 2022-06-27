@@ -1,4 +1,4 @@
-const { request } = require('express');
+const { request, response } = require('express');
 const { query } = require('express');
 const { json } = require('express/lib/response');
 const schedule = require('node-schedule');
@@ -97,29 +97,54 @@ const triggerClose = schedule.scheduleJob({hour:23, minute:59}, () => {
 
 const test = (request, response) => { 
     pool.query(
-        `SELECT * FROM (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY c."courseID") att FULL OUTER JOIN (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY c."courseID") ins ON (att."ID" = ins."ID")`,
+        'SELECT "courseID" FROM courses ORDER BY "courseID" desc limit 1;',
         (error, results) => {
             if (error) {
                 throw error
             }
-            for (let row of results.rows) {
-                var id = row["ID"]
-                var courseStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
-                var participants = row["TotalParticipants"] 
-                
-                pool.query(
-                    'UPDATE public.courses SET courseparticipants=$1, coursestats=$2 WHERE "courseID"=$3',
-                    [participants, courseStats, id],
-                    (error, results) => {
-                        if(error){
-                            throw error
-                        }
-                    }
-                )
-            }
-            response.send('CALABAZA')
+            response.send(results.rows[0]["courseID"] + " :)")
         }
     )
+}
+
+const singup = async (request, response) => {
+    try {
+        const { name, surnames, emailAddress, password, age, gender, phone } = request.body;
+        if (!(emailAddress && password && name && surnames && age && gender && phone)) {
+          res.status(400).send("All input is required");
+        }
+        await pool.query(
+          'SELECT * FROM people WHERE "emailAddress" = $1', 
+          [emailAddress],
+          (error, results) => {
+            if(error){
+              throw error
+            }
+            if (results == {}) {
+              return res.status(409).send("User Already Exist. Please Login");
+            }
+          }
+        )
+        pool.query(
+          'INSERT INTO public.people(name, surnames, age, gender, "emailAddress", "isAUser", password, phone, active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+          [name, surnames, age, gender, emailAddress, true, password, phone, true],
+          (error, results) => {
+            if(error){
+              throw error
+            }
+            const token = jwt.sign(
+              { user_id: emailAddress },
+              process.env.TOKEN_KEY,
+              {
+                expiresIn: "2h",
+              }
+            );
+            response.status(201).json(token);
+          }
+        )    
+    } catch (err) {
+    console.log(err);
+    }
 }
 
 //PEOPLE
@@ -349,7 +374,7 @@ const deleteActivity = (request, response) => {
 const getAllCourses = (request, response) => {
    
     pool.query(
-        'SELECT * FROM courses',
+        'SELECT a."activityID", a.activityname, c.* FROM courses c NATURAL INNER JOIN activities a',
         (error, results) => {
             if (error) {
                 throw error
@@ -375,51 +400,65 @@ const getActivityCourses = (request, response) => {
     )
 }
 
-const createActivityCourse = (request, response) => {
+const createActivityCourse = async (request, response) => {
 
     const activityID = parseInt(request.params.activityID)
 
     const { coursename, dateini, dateend, schedule, responsible} = request.body
 
-    const courseID = ""
-
+    var courseID
     pool.query(
-        'INSERT INTO courses(coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsibel) VALUES ($1, $2, $3, $4, null, null, $5)',
-        [activityname, activitydescription],
-        (error, results) => {
+        'INSERT INTO courses("activityID", coursename, dateini, dateend, schedule, courseparticipants, coursestats, responsible) VALUES ($1, $2, $3, $4, $5, null, null, $6) RETURNING "courseID"',
+        [activityID, coursename, dateini, dateend, schedule, responsible],
+        (error, result) => {
             if (error) {
                 throw error
             }
-            courseID = results.courseID
-            response.status(201).send(`Course added with ActivityID: ${activityID} and CourseID: ${courseID}`)
+
+            console.log(`cID: ${result.rows[0].courseID}`)
+            courseID = result.rows[0].courseID
+
+            console.log(`INI:${dateini}`)
+            console.log(`END:${dateend}`)
+
+            const ini = new Date(dateini)
+            const end = new Date(dateend)
+        
+            var sch = schedule.split(';')
+            var finalSch = []
+            sch.forEach(timetable => {
+                var t = timetable.split(',')
+                finalSch.push(t)
+            });
+
+            console.log(`${finalSch}`)
+            console.log(`INI:${ini}`)
+            console.log(`END:${end}`)
+        
+            for(it = ini; it <= end; it = it.addDays(1)){
+                console.log(`testDay: ${it}`)
+                for(i=0; i<finalSch.length; ++i){
+                    // 0 sun; 1 mon; 2...
+                    console.log(`its: ${it.getDay()} vs ${finalSch[i][0]}`)
+                    if (it.getDay() == finalSch[i][0]){
+                        pool.query(
+                            'INSERT INTO activitydays("activityID","courseID", day, timeini, timeend) VALUES($1, $2, $3, $4, $5)',
+                            [activityID, courseID, it, finalSch[i][1], finalSch[i][2]],
+                            (error, results) => {
+                                if (error) {
+                                    throw error
+                                }
+                                console.log(`added`)
+                            }
+                        )
+                    }
+                }
+            }
+            response.status(201).send('Course added fine')
         }
     )
 
-    const ini = Date(dateini)
-    const end = Date(dateend)
-
-    var sch = schedule.split(';')
-    var finalSch = []
-    sch.forEach(timetable => {
-        var t = timetable.split(',')
-        finalSch.push(t)
-    });
-
-    for(it = ini; it > end; it = it.addDays(1)){
-        for(i=0; i<finalSch.length; ++i){
-            if (it.getDay() == finalSch[i][0]){
-                pool.query(
-                    'INSERT INTO activitydays("activityID","courseID", day, timeini, timeend) VALUES($1, $2, $3, $4, $5)',
-                    [activityID, courseID, it, finalSch[i][1], finalSch[i][2]],
-                    (error, results) => {
-                        if (error) {
-                            throw error
-                        }
-                    }
-                )
-            }
-        }
-    }
+   
 }
 
 const getCourseByID = (request, response) => {
@@ -684,7 +723,7 @@ const getPersonInscriptions = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT * FROM inscriptions WHERE personID = $1',
+        'SELECT a."activityID", a.activityname, c.* FROM inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activities a WHERE personID = $1',
         [id],
         (error, results) => {
             if (error) {
@@ -696,6 +735,77 @@ const getPersonInscriptions = (request, response) => {
     )
 }
 
+const addPersonInscription = (request, response) => {
+    const personID = parseInt(request.params.personID)
+
+    const { activityID, courseID } = request.body
+
+    pool.query(
+        'INSERT INTO inscriptions("personID", "activityID", "courseID") VALUES($1, $2, $3)',
+        [personID, activityID, courseID],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            pool.query(
+                'SELECT day, timeini FROM activitydays WHERE "activityID" = $1 AND "courseID" = $2 AND day >= CURRENT_DATE',
+                [activityID, courseID],
+                (error, results2) => {
+                    if (error) {
+                        throw error
+                    }
+                    for(var row in results2.rows){
+                        pool.query(
+                            'INSERT INTO public.attendees("personID", "activityID", "courseID", day, timeini, attended, late, timelate) VALUES ($1, $2, $3, $4, $5, false, false, false)',
+                            [personID, activityID, courseID, row["day"], row["timeini"]],
+                            (error, results3) => {
+                                if (error) {
+                                    throw error
+                                }
+                            }
+                        )
+                    }
+                }
+            )
+            response.status(201).send('added')
+        }
+    )
+}
+
+const deletePersonInsccription = (request, response) => {
+    const PersonID = parseInt(request.params.personID)
+    const activityID = parseInt(request.params.activityID)
+    const courseID = parseInt(request.params.courseID)
+
+    pool.query(
+        'DELETE FROM inscriptions WHERE "personID"=$1 AND "activityID"=$2 AND "courseID"=$3',
+        [PersonID, activityID, courseID],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(200).send('deleted')
+        }
+    )
+}
+
+const gePersonAttendanceToCourse = (request, response) => {
+    const personID = parseInt(request.params.personID)
+    const courseID = parseInt(request.params.courseID)
+
+    pool.query(
+        'SELECT p."personID", c."activityID" c."courseID" COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM people p NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE p."PersonID"=$1 AND c."courseID"=$2 AND ad.day < CURRENT_DATE',
+        [personID, courseID],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(200).json(results.rows)
+        }
+    )
+}
+
+//STATS
 const generateStatsActivity = (request, response) => {
     
     const activityID = parseInt(request.params.activityID)
@@ -869,5 +979,9 @@ module.exports = {
     getActivityDayAttendance,
     createActivityDay,
     getPersonInscriptions,
+    addPersonInscription,
+    deletePersonInsccription,
+    gePersonAttendanceToCourse,
+    singup, 
     test
 }

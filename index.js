@@ -5,6 +5,8 @@ const db = require('./queries')
 const { request } = require('express')
 const { response } = require('express')
 
+const { Pool } = require('pg/lib')
+
 const app = express()
 app.use(bodyParser.json())
 app.use(
@@ -17,6 +19,8 @@ app.get('/', (request, response) => {
 	response.json({ info: 'Node.js, Express, and Postgres API - MIGUEL TFG 2022' })
   }
 )
+
+app.post('/singup', db.singup)
 
 app.get('/test', db.test)
 
@@ -31,6 +35,10 @@ app.get('/people/responsibles/:personID/courses', db.getResonsiblesCourses) //OK
 app.get('/people/:personID', db.getPersonByID) //OK
 app.put('/people/:personID', db.updatePersonalData) //OK
 app.put('/people/:personID/unsub', db.unsubscribe_subscribe) //OK
+
+app.get('/person/:personID/inscriptions', db.getPersonInscriptions)
+app.post('/person/:personID/inscriptions', db.addPersonInscription)
+app.delete('/person/:personID/inscriptions/:activityID/:courseID', db.deletePersonInsccription)
 
 app.get('/activities', db.getAllActivities) //OK
 app.post('/activities', db.createActivity) //OK
@@ -66,6 +74,20 @@ app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/at
 app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees) //OK
 
 app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendance', db.getActivityDayAttendance) //OK
+
+function verifyToken(req, res, next) {
+  const bearerHeader = req.headers['authorization'];
+
+  if (bearerHeader) {
+    const bearer = bearerHeader.split(' ');
+    const bearerToken = bearer[1];
+    req.token = bearerToken;
+    next();
+  } else {
+    // Forbidden
+    res.sendStatus(403);
+  }
+}
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
