@@ -31,6 +31,7 @@ app.get('/people/responsibles', db.getAllResponsibles) //CHECK
 app.get('/people/responsibles/:personID', db.getPersonByID) //OK
 
 app.get('/people/responsibles/:personID/courses', db.getResonsiblesCourses) //OK
+app.get('/people/responsibles/:personID/courses/attendance', db.getResonsiblesCoursesStats)
 
 app.get('/people/:personID', db.getPersonByID) //OK
 app.put('/people/:personID', db.updatePersonalData) //OK

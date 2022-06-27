@@ -258,6 +258,22 @@ const getResonsiblesCourses = (request, response) => {
     )
 }
 
+const getResonsiblesCoursesStats = (request, response) => {
+
+    const responsible = parseInt(request.params.personID)
+
+    pool.query(
+        'SELECT att."activityID", att."courseID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM attendees att NATURAL INNER JOIN courses c WHERE c.responsible = $1 AND att.day <= CURRENT_DATE GROUP BY att."activityID", att."courseID"',
+        [responsible],
+        (error, results) => {
+            if(error){
+                throw error
+            }
+            response.status(200).json(results.rows)
+        }
+    )
+}
+
 //ACTIVITIES
 const getAllActivities = (request, response) => {
    
@@ -791,7 +807,6 @@ const deletePersonInsccription = (request, response) => {
 
 const gePersonAttendanceToCourses = (request, response) => {
     const personID = parseInt(request.params.personID)
-    const courseID = parseInt(request.params.courseID)
 
     pool.query(
         'SELECT att."activityID", att."courseID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM attendees att WHERE att."personID" = $1 AND att.day <= CURRENT_DATE GROUP BY att."activityID", att."courseID"',
@@ -982,6 +997,7 @@ module.exports = {
     addPersonInscription,
     deletePersonInsccription,
     gePersonAttendanceToCourses,
+    getResonsiblesCoursesStats,
     singup, 
     test
 }
