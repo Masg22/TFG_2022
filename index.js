@@ -38,7 +38,8 @@ app.put('/people/:personID/unsub', db.unsubscribe_subscribe) //OK
 
 app.get('/person/:personID/inscriptions', db.getPersonInscriptions)
 app.post('/person/:personID/inscriptions', db.addPersonInscription)
-app.delete('/person/:personID/inscriptions/stats', db.deletePersonInsccription)
+app.get('/person/:personID/inscriptions/attendance', db.gePersonAttendanceToCourses)
+app.delete('/person/:personID/inscriptions/:activityID/:courseID', db.deletePersonInsccription)
 
 app.get('/activities', db.getAllActivities) //OK
 app.post('/activities', db.createActivity) //OK
