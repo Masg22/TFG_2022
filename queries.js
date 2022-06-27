@@ -31,7 +31,7 @@ const triggerActivityStats = schedule.scheduleJob({hour: 23, minute: 59}, () => 
             }
             for (let row of results.rows) {
                 var id = row["ID"]
-                var activityStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
+                var activityStats = "A:"+(row["attA"] != null ? row["attA"] : '0')+",L:"+(row["attL"] != null ? row["attL"] : '0')+",N:"+(row["attN"] != null ? row["attN"] : '0')+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
                 var participants = row["TotalParticipants"] 
                 
                 pool.query(
@@ -58,7 +58,7 @@ const triggerCourseStats = schedule.scheduleJob({hour:23, minute:59}, () => {
             }
             for (let row of results.rows) {
                 var id = row["ID"]
-                var courseStats = "A:"+row["attA"]+",L:"+row["attL"]+",N:"+row["attN"]+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
+                var courseStats = "A:"+(row["attA"] != null ? row["attA"] : '0')+",L:"+(row["attL"] != null ? row["attL"] : '0')+",N:"+(row["attN"] != null ? row["attN"] : '0')+";F:"+row["genF"]+",M:"+row["genM"]+";-18:"+row["Under_18"]+",18_25:"+row["_18_25"]+",26_35:"+row["_26_35"]+",36_45:"+row["_36_45"]+",+45:"+row["Over_45"]
                 var participants = row["TotalParticipants"] 
                 
                 pool.query(
@@ -278,7 +278,7 @@ const getResonsiblesCoursesStats = (request, response) => {
 const getAllActivities = (request, response) => {
    
     pool.query(
-        'SELECT * FROM activities',
+        `SELECT a.*, CASE WHEN EXISTS(SELECT * FROM courses c WHERE c."activityID" = a."activityID" AND c.closedcourse = false) THEN 'true' ELSE 'false' END AS hasopencourses FROM activities a`,
         (error, results) => {
             if (error) {
                 throw error
