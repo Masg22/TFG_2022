@@ -723,7 +723,7 @@ const getPersonInscriptions = (request, response) => {
     const id = parseInt(request.params.personID)
 
     pool.query(
-        'SELECT a."activityID", a.activityname, c.* FROM inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activities a WHERE personID = $1',
+        'SELECT a."activityID", a.activityname, c.* FROM inscriptions i NATURAL INNER JOIN courses c NATURAL INNER JOIN activities a WHERE "personID" = $1',
         [id],
         (error, results) => {
             if (error) {
