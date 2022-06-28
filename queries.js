@@ -164,14 +164,7 @@ const singup = async (request, response) => {
             if(error){
               throw error
             }
-            const token = jwt.sign(
-              { user_id: emailAddress },
-              process.env.TOKEN_KEY,
-              {
-                expiresIn: "2h",
-              }
-            );
-            response.status(201).json(token);
+            response.status(201).send(`added`);
           }
         )    
     } catch (err) {
@@ -321,11 +314,11 @@ const getAllActivities = (request, response) => {
 } 
 
 const createActivity = (request, response) => {
-    const { activityname, activitydescription } = request.body
+    const { activityname, activitydescription, activitytype} = request.body
 
     pool.query(
-        'INSERT INTO activities( activityname, activitydescription, generalstats, totalparticipants) VALUES ($1, $2, null, null)',
-        [activityname, activitydescription],
+        'INSERT INTO activities( activityname, activitydescription, generalstats, totalparticipants, activitytype) VALUES ($1, $2, null, null, $3)',
+        [activityname, activitydescription, activitytype],
         (error, results) => {
             if (error) {
                 throw error
