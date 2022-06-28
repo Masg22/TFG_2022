@@ -111,7 +111,7 @@ const login = (request, response) => {
     try {
         const {emailAddress, password} = request.body;
         if (!(emailAddress && password)){
-            response.status(400).send("All input is required")
+            response.status(400).send("All input are required")
         }
         else {
             pool.query(
@@ -121,7 +121,7 @@ const login = (request, response) => {
                     if (error) {
                         throw error
                     }
-                    if (results.rowCount == 0) {
+                    if (results.rows.length == 0) {
                         response.status(404).send("Email or password icorrect");
                       }
                     else if (results.rows[0].active == 'false') {
