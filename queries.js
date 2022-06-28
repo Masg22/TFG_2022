@@ -21,7 +21,7 @@ Date.prototype.addDays = function(days) {
     return date;
 }
 
-const triggerActivityStats = schedule.scheduleJob({hour: 23, minute: 59}, () => {
+const triggerActivityStats = schedule.scheduleJob({hour: 9, minute: 54}, () => {
     console.log('ActivityStatsUpdated')
     pool.query(
         `SELECT * FROM (SELECT a."activityID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.activities a NATURAL INNER JOIN public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY a."activityID") att FULL OUTER JOIN (SELECT a."activityID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM activities a NATURAL INNER JOIN courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY a."activityID") ins ON (att."ID" = ins."ID")`,
@@ -48,7 +48,7 @@ const triggerActivityStats = schedule.scheduleJob({hour: 23, minute: 59}, () => 
     )
 })
 
-const triggerCourseStats = schedule.scheduleJob({hour:23, minute:59}, () => {
+const triggerCourseStats = schedule.scheduleJob({hour:9, minute:54}, () => {
     console.log('CourseStatsUpdated')
     pool.query(
         `SELECT * FROM (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE att.attended AND NOT att.late) AS "attA", COUNT(*) FILTER (WHERE att.attended AND att.late) AS "attL", COUNT(*) FILTER (WHERE NOT att.attended AND NOT att.late) AS "attN" FROM public.courses c NATURAL INNER JOIN activitydays ad NATURAL INNER JOIN attendees att WHERE ad.day < CURRENT_DATE GROUP BY c."courseID") att FULL OUTER JOIN (SELECT c."courseID" as "ID", COUNT(*) FILTER (WHERE p.gender='F') AS "genF", COUNT(*) FILTER (WHERE p.gender='M') AS "genM", SUM(CASE WHEN p.age < 18 THEN 1 ELSE 0 END) AS "Under_18", SUM(CASE WHEN p.age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) AS "_18_25", SUM(CASE WHEN p.age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) AS "_26_35", SUM(CASE WHEN p.age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS "_36_45", SUM(CASE WHEN p.age > 45 THEN 1 ELSE 0 END) AS "Over_45", COUNT(*) AS "TotalParticipants" FROM courses c NATURAL INNER JOIN inscriptions i NATURAL INNER JOIN people p GROUP BY c."courseID") ins ON (att."ID" = ins."ID")`,
@@ -75,10 +75,10 @@ const triggerCourseStats = schedule.scheduleJob({hour:23, minute:59}, () => {
     )
 })
 
-const triggerClose = schedule.scheduleJob({hour:23, minute:59}, () => {
+const triggerClose = schedule.scheduleJob({hour:9, minute:54}, () => {
     console.log('ClosingTodayActivities')
     pool.query(
-        'UPDATE public.activitydays SET closed = true WHERE day <= CURRENT_DATE',
+        'UPDATE public.activitydays SET closed = true WHERE day < CURRENT_DATE',
         (error, results) => {
             if (error) {
                 throw error
@@ -86,7 +86,7 @@ const triggerClose = schedule.scheduleJob({hour:23, minute:59}, () => {
         }
     )
     pool.query(
-        'UPDATE public.courses SET closed=true WHERE dateend <= CURRENT_DATE;',
+        'UPDATE public.courses SET closedcourse=true WHERE dateend < CURRENT_DATE;',
         (error, results) => {
             if (error) {
                 throw error
@@ -687,6 +687,26 @@ const createActivityDay = (request, response) => {
             if (error) {
                 throw error
             }
+            pool.query(
+                'SELECT "personID" FROM inscriptions WHERE "activityID"=$1 AND "courseID"=$2',
+                [activityID, courseID],
+                (error, results2) => {
+                    if (error) {
+                        throw error
+                    }
+                    for(let row of results2.rows){
+                        pool.query(
+                            'INSERT INTO public.attendees("personID", "activityID", "courseID", day, timeini, attended, late, timelate) VALUES ($1, $2, $3, $4, $5, false, false, false)',
+                            [row["personID"], activityID, courseID, day, timeini],
+                            (error, results) => {
+                                if (error) {
+                                    throw error
+                                }
+                            }
+                        )
+                    }
+                }
+            )
             response.status(201).send(`Activityday added with ID: ${activityID}, ${courseID}, ${day}, ${timeini}`)
         }
     )
