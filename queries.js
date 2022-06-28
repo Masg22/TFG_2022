@@ -107,6 +107,38 @@ const test = (request, response) => {
     )
 }
 
+const login = (request, response) => {
+    try {
+        const {emailAddress, password} = request.body;
+        if (!(emailAddress && password)){
+            response.status(400).send("All input is required")
+        }
+        else {
+            pool.query(
+                'SELECT "personID", name, surnames, "emailAddress", phone, gender, age, active, "personID" AS token FROM people WHERE "emailAddress" = $1 AND password = $2',
+                [emailAddress, password],
+                (error, results) => {
+                    if (error) {
+                        throw error
+                    }
+                    if (results.rowCount == 0) {
+                        response.status(404).send("Email or password icorrect");
+                      }
+                    else if (results.rows[0].active == 'false') {
+                        response.status(409).send("This User is unsubscrived want to subscrive again?")
+                    }
+                    else {
+                        response.status(200).json(results.rows)
+                    }
+                }
+            )
+        }
+    } catch (error) {
+        console.log(err);
+    }
+    
+}
+
 const singup = async (request, response) => {
     try {
         const { name, surnames, emailAddress, password, age, gender, phone } = request.body;
@@ -143,7 +175,7 @@ const singup = async (request, response) => {
           }
         )    
     } catch (err) {
-    console.log(err);
+        console.log(err);
     }
 }
 
@@ -998,6 +1030,7 @@ module.exports = {
     deletePersonInsccription,
     gePersonAttendanceToCourses,
     getResonsiblesCoursesStats,
+    login,
     singup, 
     test
 }

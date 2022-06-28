@@ -20,6 +20,8 @@ app.get('/', (request, response) => {
   }
 )
 
+app.get('/login', db.login)
+
 app.post('/singup', db.singup)
 
 app.get('/test', db.test)
@@ -76,20 +78,6 @@ app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/at
 app.put('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendees', db.updateAttendees) //OK
 
 app.get('/activities/:activityID/courses/:courseID/activitydays/:day/:timeini/attendance', db.getActivityDayAttendance) //OK
-
-function verifyToken(req, res, next) {
-  const bearerHeader = req.headers['authorization'];
-
-  if (bearerHeader) {
-    const bearer = bearerHeader.split(' ');
-    const bearerToken = bearer[1];
-    req.token = bearerToken;
-    next();
-  } else {
-    // Forbidden
-    res.sendStatus(403);
-  }
-}
 
 app.listen(port, () => {
 	console.log(`Running on port ${port}`)
