@@ -345,11 +345,11 @@ const getActivityByID = (request, response) => {
 
 const updateActivity = (request, response) => {
     const id = parseInt(request.params.activityID)
-    const {activityname, activitydescription, generalstats, totalparticipants} = request.body
+    const {activityname, activitydescription, generalstats, totalparticipants, activitytype} = request.body
 
     pool.query(
-        'UPDATE activities SET activityname = $1, activitydescription = $2, generalstats = $3, totalparticipants = $4 WHERE "activityID" = $5',
-        [activityname, activitydescription, generalstats, totalparticipants, id],
+        'UPDATE activities SET activityname = $1, activitydescription = $2, generalstats = $3, totalparticipants = $4, activitytype = $6 WHERE "activityID" = $5',
+        [activityname, activitydescription, generalstats, totalparticipants, id, activitytype],
         (error, results) => {
             if (error) {
                 throw error
