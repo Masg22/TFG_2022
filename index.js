@@ -20,7 +20,7 @@ app.get('/', (request, response) => {
   }
 )
 
-app.get('/login', db.login)
+app.post('/login', db.login)
 
 app.post('/singup', db.singup)
 
